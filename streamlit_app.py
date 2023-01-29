@@ -141,3 +141,58 @@ st.write("Trip duration vs trip distance (miles) (with linear regression line")
 
 fig1 = px.scatter(ingest.yellow_taxi_data, x="trip_distance", y="trip_duration", title="Trip duration vs trip distance", trendline="ols", trendline_color_override="red", labels={"trip_distance": "Trip distance (miles)", "trip_duration": "Trip duration (seconds)"})
 st.plotly_chart(fig1, use_container_width=True)
+
+
+class FeatureEngineering:
+
+    def __init__(self, ingest):
+        self.yellow_taxi_data = ingest.yellow_taxi_data
+        self.green_taxi_data = ingest.green_taxi_data
+        
+    def one_hot(self):
+        self.yellow_taxi_data = pd.concat([self.yellow_taxi_data, pd.get_dummies(self.yellow_taxi_data['store_and_fwd_flag'])], axis=1)
+        self.yellow_taxi_data = pd.concat([self.yellow_taxi_data, pd.get_dummies(self.yellow_taxi_data['VendorID'])], axis=1)
+        self.yellow_taxi_data.drop(['store_and_fwd_flag'], axis=1, inplace=True)
+        self.yellow_taxi_data.drop(['VendorID'], axis=1, inplace=True)
+
+    def date_features(self):
+        self.yellow_taxi_data['month'] = self.yellow_taxi_data.tpep_pickup_datetime.dt.month
+        self.yellow_taxi_data['day'] = self.yellow_taxi_data.tpep_pickup_datetime.dt.day
+        self.yellow_taxi_data['hour'] = self.yellow_taxi_data.tpep_pickup_datetime.dt.hour
+        self.yellow_taxi_data['minute'] = self.yellow_taxi_data.tpep_pickup_datetime.dt.minute
+        self.yellow_taxi_data['day_of_week'] = self.yellow_taxi_data.tpep_pickup_datetime.dt.dayofweek
+        # self.yellow_taxi_data['week'] = self.yellow_taxi_data.tpep_pickup_datetime.dt.isocalendar().week
+        self.yellow_taxi_data['weekday'] = self.yellow_taxi_data.tpep_pickup_datetime.dt.weekday
+        
+
+    def drop_cols(self):
+        try:
+            self.yellow_taxi_data = self.yellow_taxi_data.drop(['tpep_pickup_datetime'], axis=1)
+            self.yellow_taxi_data = self.yellow_taxi_data.drop(['tpep_dropoff_datetime'], axis=1)
+            self.yellow_taxi_data = self.yellow_taxi_data.drop(['airport_fee'], axis=1)
+
+
+        except KeyError:
+            pass
+        # self.yellow_taxi_data = self.yellow_taxi_data.drop(['tpep_pickup_datetime'], axis=1)
+        # self.yellow_taxi_data = self.yellow_taxi_data.drop(['id'], axis=1)
+
+        # # These cols don't exist in the kaggle dataset
+        # # self.yellow_taxi_data = self.yellow_taxi_data.drop(['DOLocationID'], axis=1)
+        # # self.yellow_taxi_data = self.yellow_taxi_data.drop(['PULocationID'], axis=1)
+        # # self.yellow_taxi_data = self.yellow_taxi_data.drop(['airport_fee'], axis=1)
+        # # self.yellow_taxi_data = self.yellow_taxi_data.drop(['RatecodeID'], axis=1)
+        # # self.yellow_taxi_data = self.yellow_taxi_data.drop(['congestion_surcharge'], axis=1)
+        # self.yellow_taxi_data = self.yellow_taxi_data.drop(['passenger_count'], axis=1)
+
+    def cols_to_str(self):
+        self.yellow_taxi_data.columns = self.yellow_taxi_data.columns.astype(str)
+        
+
+fe = FeatureEngineering(ingest=ingest)
+fe.one_hot()
+fe.date_features()
+
+st.write(fe.yellow_taxi_data.head(10))
+
+st.write('lol')
