@@ -1,14 +1,8 @@
 pandas 
 streamlit
 plotly
-sklearn.model_selection 
-sklearn.metrics 
-sklearn.metrics 
-lightgbm 
+sklearn
 lightgbm 
 numpy 
-sklearn.ensemble 
-sklearn.linear_model 
-matplotlib.pyplot 
+matplotlib
 sodapy 
-plotly.express 
