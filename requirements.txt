@@ -6,3 +6,4 @@ lightgbm
 numpy 
 matplotlib
 sodapy 
+statsmodels
