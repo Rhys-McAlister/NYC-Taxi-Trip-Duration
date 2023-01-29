@@ -286,7 +286,9 @@ class Model:
         lgbm.fit(X_train, y_train)
         train_test_score = (lgbm.score(X_train, y_train), lgbm.score(X_test, y_test))
         light_mse = (f"MSE: {np.sqrt(MSE(y_test, lgbm.predict(X_test)))}")
-        return train_test_score, light_mse
+        feature_imp = pd.DataFrame(sorted(zip(lgbm.feature_importances_,X_train.columns)), columns=['Value','Feature'])
+        
+        return train_test_score, light_mse, feature_imp
         
        
 
@@ -315,8 +317,10 @@ class Model:
 
 model = Model(fe)
 X_train, X_test, y_train, y_test = model.train_test_split()
-train_test_score, light_mse = model.light_gbm()
+train_test_score, light_mse, feature_imp  = model.light_gbm()
 st.write(f"{light_mse}")
 st.write(f"{train_test_score}")
 
-st.write('lol')
+
+st.write(feature_imp)
+
