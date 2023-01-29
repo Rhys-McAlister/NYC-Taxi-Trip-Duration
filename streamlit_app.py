@@ -11,6 +11,10 @@ from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 from sodapy import Socrata
 import plotly.express as px
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
 
 st.set_page_config(
     page_title='New York City Taxi Prediction'
@@ -59,14 +63,22 @@ class IngestData:
     #     self.green_taxi_data['trip_distance'] = self.green_taxi_data['trip_distance'].astype('float64')
 
     def change_yellow_types(self):
-        self.yellow_taxi_data['PULocationID'] = self.yellow_taxi_data['pulocationid'].astype('int64')
-        self.yellow_taxi_data['DOLocationID'] = self.yellow_taxi_data['dolocationid'].astype('int64')
+        self.yellow_taxi_data['pulocationid'] = self.yellow_taxi_data['pulocationid'].astype('int64')
+        self.yellow_taxi_data['dolocationid'] = self.yellow_taxi_data['dolocationid'].astype('int64')
         self.yellow_taxi_data['fare_amount'] = self.yellow_taxi_data['fare_amount'].astype('float64')
         self.yellow_taxi_data['total_amount'] = self.yellow_taxi_data['total_amount'].astype('float64')
         self.yellow_taxi_data['passenger_count'] = self.yellow_taxi_data['passenger_count'].astype('int64')
         self.yellow_taxi_data['trip_distance'] = self.yellow_taxi_data['trip_distance'].astype('float64')
+        self.yellow_taxi_data['ratecodeid'] = self.yellow_taxi_data['ratecodeid'].astype('int64')
+        self.yellow_taxi_data['payment_type'] = self.yellow_taxi_data['payment_type'].astype('int64')
+        self.yellow_taxi_data['extra'] = self.yellow_taxi_data['extra'].astype('float64')
+        self.yellow_taxi_data['mta_tax'] = self.yellow_taxi_data['mta_tax'].astype('float64')
+        self.yellow_taxi_data['tip_amount'] = self.yellow_taxi_data['tip_amount'].astype('float64')
+        self.yellow_taxi_data['tolls_amount'] = self.yellow_taxi_data['tolls_amount'].astype('float64')
+        self.yellow_taxi_data['improvement_surcharge'] = self.yellow_taxi_data['improvement_surcharge'].astype('float64')
+        self.yellow_taxi_data['congestion_surcharge'] = self.yellow_taxi_data['congestion_surcharge'].astype('float64')
 
-        
+# tpep_pickup_datetime, tpep_dropoff_datetime, ratecodeid, pulocationid, dolocationid, payment_type, extra, mta_tax, tip_amount, tolls_amount, improvement_surcharge, congestion_surcharge
         
     def create_target(self):
             self.yellow_taxi_data['tpep_pickup_datetime'] = pd.to_datetime(self.yellow_taxi_data['tpep_pickup_datetime'])
@@ -119,7 +131,7 @@ class IngestData:
         # self.green_taxi_data = self.green_taxi_data[(self.green_taxi_data.fare_amount < 50000)]
         # self.green_taxi_data = self.green_taxi_data[(self.green_taxi_data.total_amount < 50000)]
 ingest = IngestData()
-ingest.read_yellow_taxi_from_api(1000)
+ingest.read_yellow_taxi_from_api(5000)
 
 st.write("Here is an example of NYC yellow taxi data taken from the New York City Open Data API.")
 st.write(ingest.yellow_taxi_data.head(10))
@@ -147,13 +159,13 @@ class FeatureEngineering:
 
     def __init__(self, ingest):
         self.yellow_taxi_data = ingest.yellow_taxi_data
-        self.green_taxi_data = ingest.green_taxi_data
+        # self.green_taxi_data = ingest.green_taxi_data
         
     def one_hot(self):
         self.yellow_taxi_data = pd.concat([self.yellow_taxi_data, pd.get_dummies(self.yellow_taxi_data['store_and_fwd_flag'])], axis=1)
-        self.yellow_taxi_data = pd.concat([self.yellow_taxi_data, pd.get_dummies(self.yellow_taxi_data['VendorID'])], axis=1)
+        self.yellow_taxi_data = pd.concat([self.yellow_taxi_data, pd.get_dummies(self.yellow_taxi_data['vendorid'])], axis=1)
         self.yellow_taxi_data.drop(['store_and_fwd_flag'], axis=1, inplace=True)
-        self.yellow_taxi_data.drop(['VendorID'], axis=1, inplace=True)
+        self.yellow_taxi_data.drop(['vendorid'], axis=1, inplace=True)
 
     def date_features(self):
         self.yellow_taxi_data['month'] = self.yellow_taxi_data.tpep_pickup_datetime.dt.month
@@ -192,7 +204,119 @@ class FeatureEngineering:
 fe = FeatureEngineering(ingest=ingest)
 fe.one_hot()
 fe.date_features()
+fe.drop_cols()
+fe.cols_to_str()
+
+
+
+month_trip_variation = px.box(fe.yellow_taxi_data, x="month", y="trip_duration", points="all")
+month_trip_variation.update_traces(quartilemethod="exclusive") # or "inclusive", or "linear" by default
+st.plotly_chart(month_trip_variation, use_container_width=True)
+
+month_trip_variation_v = px.violin(fe.yellow_taxi_data, x="month", y="trip_duration", box=True, points="all", hover_data=fe.yellow_taxi_data.columns)
+st.plotly_chart(month_trip_variation_v, use_container_width=True)
+
+daily_trip_variation = px.box(fe.yellow_taxi_data, x="day_of_week", y="trip_duration")
+daily_trip_variation.update_traces(quartilemethod="exclusive") # or "inclusive", or "linear" by default
+st.plotly_chart(daily_trip_variation, use_container_width=True)
 
 st.write(fe.yellow_taxi_data.head(10))
+
+st.write("Grouped by month")
+st.write("Average per month")
+
+st.write(fe.yellow_taxi_data.groupby('month')[['month', 'trip_duration', 'total_amount', 'passenger_count']].mean())
+
+st.write("Count per month")
+
+st.write(fe.yellow_taxi_data.groupby('month')[['trip_duration']].count())
+
+st.write("Grouped by day of week")
+st.write("Average per day")
+
+st.write(fe.yellow_taxi_data.groupby('day_of_week')[['day_of_week', 'trip_duration', 'total_amount', 'passenger_count']].mean())
+st.write("Count per day")
+
+
+st.write(fe.yellow_taxi_data.groupby('weekday')[['trip_duration']].count())
+
+st.write("Grouped by hour of the day")
+st.write("Average per hour")
+
+st.write(fe.yellow_taxi_data.groupby('hour')[['hour', 'trip_duration', 'total_amount', 'passenger_count']].mean())
+st.write("Count per hour")
+
+st.write(fe.yellow_taxi_data.groupby('hour')[['trip_duration']].count())
+
+fig5 = px.scatter(fe.yellow_taxi_data, x="trip_duration", y="total_amount", color="month")
+st.plotly_chart(fig5, use_container_width=True)
+
+fig6 = px.scatter(fe.yellow_taxi_data, x="trip_duration", y="total_amount", color="hour")
+st.plotly_chart(fig6, use_container_width=True)
+
+fig7 = px.scatter(fe.yellow_taxi_data, x="trip_duration", y="total_amount", color="day_of_week")
+st.plotly_chart(fig7, use_container_width=True)
+
+
+
+class Model:
+
+    def __init__(self, fe):
+        self.yellow_taxi_data = fe.yellow_taxi_data
+
+    def train_test_split(self):
+        y = self.yellow_taxi_data['trip_duration']
+        X = self.yellow_taxi_data.drop(['trip_duration'], axis=1)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        return X_train, X_test, y_train, y_test
+
+    def random_forest(self):
+        from sklearn.ensemble import RandomForestRegressor
+        rf = RandomForestRegressor()
+        rf.fit(X_train, y_train)
+        y_pred = rf.predict(X_test)
+        print(f"Random Forest RMSE: {mean_squared_error(y_test, y_pred, squared=False)}")
+
+    def light_gbm(self):
+        from sklearn.metrics import mean_squared_error as MSE
+        import lightgbm as lgb
+        from lightgbm import LGBMRegressor
+        import numpy as np
+        lgbm = lgb.LGBMRegressor()
+        lgbm.fit(X_train, y_train)
+        train_test_score = (lgbm.score(X_train, y_train), lgbm.score(X_test, y_test))
+        light_mse = (f"MSE: {np.sqrt(MSE(y_test, lgbm.predict(X_test)))}")
+        return train_test_score, light_mse
+        
+       
+
+    def light_preds(self):
+        import numpy as np
+        import lightgbm as lgb
+        from lightgbm import LGBMRegressor
+        lgbm = lgb.LGBMRegressor()
+        lgbm.fit(X_train, y_train)
+        test_x_data = test_fe.yellow_taxi_data.drop(['airport fee'], axis = 1)
+        preds = lgbm.predict(test_x_data)
+        print(preds.shape)
+        return preds
+
+    def lrrr(self):
+        from sklearn.linear_model import LinearRegression
+        lr = LinearRegression()
+        lr.fit(X_train, y_train)
+        print(lr.score(X_train, y_train), lr.score(X_test, y_test))
+        print(f"Linear Regression RMSE: {mean_squared_error(y_test, lr.predict(X_test), squared=False)}")
+        plt.scatter(y_test, lr.predict(X_test))
+        plt.xlabel('True Values')
+        plt.ylabel('Predictions')
+        plt.show()
+
+
+model = Model(fe)
+X_train, X_test, y_train, y_test = model.train_test_split()
+train_test_score, light_mse = model.light_gbm()
+st.write(f"{light_mse}")
+st.write(f"{train_test_score}")
 
 st.write('lol')
