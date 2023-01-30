@@ -78,6 +78,18 @@ class IngestData:
         self.yellow_taxi_data['improvement_surcharge'] = self.yellow_taxi_data['improvement_surcharge'].astype('float64')
         self.yellow_taxi_data['congestion_surcharge'] = self.yellow_taxi_data['congestion_surcharge'].astype('float64')
 
+    def change_yellow_types2(self):
+        int_cols = ['pulocationid', 'dolocationid', 'passenger_count', 'ratecodeid', 'payment_type']
+        float_cols = ['fare_amount', 'total_amount', 'trip_distance', 'extra', 'mta_tax', 'tip_amount',
+         'tolls_amount', 'improvement_surcharge', 'congestion_surcharge']
+        
+        for col in int_cols:
+            self.yellow_taxi_data[col] = self.yellow_taxi_data[col].astype('int64')
+        for col in float_cols:
+            self.yellow_taxi_data[col] = self.yellow_taxi_data[col].astype('float64')
+
+
+
 # tpep_pickup_datetime, tpep_dropoff_datetime, ratecodeid, pulocationid, dolocationid, payment_type, extra, mta_tax, tip_amount, tolls_amount, improvement_surcharge, congestion_surcharge
         
     def create_target(self):
