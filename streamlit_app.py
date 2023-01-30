@@ -149,7 +149,7 @@ st.write("Here is an example of NYC yellow taxi data taken from the New York Cit
 st.write(ingest.yellow_taxi_data.head(10))
 
 ingest.fill_na()
-ingest.change_yellow_types()
+ingest.change_yellow_types2()
 ingest.create_target()
 ingest.dup_and_miss()
 ingest.outlier_removal()
