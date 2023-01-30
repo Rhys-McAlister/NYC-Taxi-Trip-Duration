@@ -270,6 +270,18 @@ fig7 = px.scatter(fe.yellow_taxi_data, x="trip_duration", y="total_amount", colo
 st.plotly_chart(fig7, use_container_width=True)
 
 
+passenger_number_boxplot = px.box(fe.yellow_taxi_data, x="passenger_count", y="trip_duration", color="passenger_count")
+st.plotly_chart(passenger_number_boxplot, use_container_width=True)
+
+
+st.write("Average trip length per passenger number")
+st.write(fe.yellow_taxi_data.groupby('passenger_count')[['trip_duration']].mean())
+
+st.write("Number of trips per passenger number")
+st.write(fe.yellow_taxi_data.groupby('passenger_count')[['trip_duration']].count())
+
+
+
 
 class Model:
 
