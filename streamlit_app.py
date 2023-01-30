@@ -154,7 +154,8 @@ ingest.create_target()
 ingest.dup_and_miss()
 ingest.outlier_removal()
 
-
+st.header("# EDA")
+st.header("## Yellow Taxi Data")
 st.write("Distribution of target variable: Trip duration (seconds)")
 
 fig = px.histogram(ingest.yellow_taxi_data, x="trip_duration", nbins=100, title="Trip duration distribution", labels={"trip_duration": "Trip duration (seconds)", "count": "Frequency"})
