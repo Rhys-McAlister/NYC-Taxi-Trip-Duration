@@ -22,6 +22,7 @@ st.set_page_config(
 
 st.title('New York City Taxi Prediction')
 
+st.markdown('This dataset is composed of records generated from trip record submissions provided by yellow taxi technology service providers. Each row in this dataset is representative of a single yellow taxi trip occurring in 2021. Each trip is described using several variables including pick up and drop off datetimes, locations, distances, fare types and quantities and passenger counts. This dataset is found on the [NYC OpenData](https://data.cityofnewyork.us/Transportation/2021-Yellow-Taxi-Trip-Data/m6nq-qud6) platform and is queried using the Socrata Open Data API.')
 
 class IngestData:
 
@@ -154,13 +155,17 @@ ingest.create_target()
 ingest.dup_and_miss()
 ingest.outlier_removal()
 
-st.header("# EDA")
-st.header("## Yellow Taxi Data")
+
+st.write('The goal of this model is to make reasonably accurate predictions of the duration of a taxi trip. Lets examine the distribution of our target variable, trip duration. ')
+
+
 st.write("Distribution of target variable: Trip duration (seconds)")
 
 fig = px.histogram(ingest.yellow_taxi_data, x="trip_duration", nbins=100, title="Trip duration distribution", labels={"trip_duration": "Trip duration (seconds)", "count": "Frequency"})
 
+
 st.plotly_chart(fig, use_container_width=True)
+
 
 st.write("Trip duration vs trip distance (miles) (with linear regression line")
 
