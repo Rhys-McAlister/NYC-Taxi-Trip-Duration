@@ -21,6 +21,21 @@ st.set_page_config()
 st.title("NYC Taxi Trip Duration Prediction")
 
 
+def fetch(dataset_url: str) -> pd.DataFrame:
+    """Read taxi data from web into pandas DataFrame"""
+
+    df = pd.read_parquet(dataset_url)
+    return df
+
+def etl_web_to_gcs(year: int, month: int, colour: str) -> None:
+    """The main ETL function"""
+    dataset_file = f"tripdata_{year}-{month:02}"
+    dataset_url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/{colour}_{dataset_file}.parquet"
+    df = fetch(dataset_url)
+    df['trip_distance'] = df['tpep_dropoff_datetime'] - df['tpep_pickup_datetime']
+    return df
+
+df = etl_web_to_gcs(2021, 1, "yellow")
 
 class IngestData:
 
