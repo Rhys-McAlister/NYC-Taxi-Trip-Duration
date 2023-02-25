@@ -20,22 +20,20 @@ from dataclasses import dataclass
 st.set_page_config()
 st.title("NYC Taxi Trip Duration Prediction")
 
+@dataclass
+class IngestDataFromTlc:
+    year: int
+    month: int
+    colour: str
+    data: pd.DataFrame = None
 
-def fetch(dataset_url: str) -> pd.DataFrame:
-    """Read taxi data from web into pandas DataFrame"""
 
-    df = pd.read_parquet(dataset_url)
-    return df
-
-def etl_web_to_gcs(year: int, month: int, colour: str) -> None:
-    """The main ETL function"""
-    dataset_file = f"tripdata_{year}-{month:02}"
-    dataset_url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/{colour}_{dataset_file}.parquet"
-    df = fetch(dataset_url)
-    df['trip_distance'] = df['tpep_dropoff_datetime'] - df['tpep_pickup_datetime']
-    return df
-
-df = etl_web_to_gcs(2021, 1, "yellow")
+    def read_taxi_data_from_tlc(self) -> pd.DataFrame:
+        """The main ETL function"""
+        dataset_file = f"tripdata_{self.year}-{self.month:02}"
+        dataset_url = f"https://d37ci6vzurychx.cloudfront.net/trip-data/{self.colour}_{dataset_file}.parquet"
+        self.data = pd.read_parquet(dataset_url)
+        return self.data
 
 class IngestData:
 
@@ -46,12 +44,7 @@ class IngestData:
         self.yellow_taxi_data = None
         self.green_api = None
         self.yellow_api = None
-
-    # def read_green_taxi_from_api(self, limit):
-    #     client = Socrata("data.cityofnewyork.us", None)
-    #     results = client.get(self.green_api, limit=limit)
-    #     self.green_taxi_data= pd.DataFrame.from_records(results)   
-
+    
     def read_yellow_taxi_from_api(self, limit):
         client = Socrata("data.cityofnewyork.us", None)
         results = client.get("m6nq-qud6", limit=limit)
@@ -205,6 +198,9 @@ class Model:
 
 def main():
 
+    tlcingest = IngestDataFromTlc(year=2020, month=1, colour='yellow')
+    tlcingest.read_taxi_data_from_tlc()
+    st.write(tlcingest.data.head())
     # Ingest Data
     ingest = IngestData()
     ingest.read_yellow_taxi_from_api(5000)
